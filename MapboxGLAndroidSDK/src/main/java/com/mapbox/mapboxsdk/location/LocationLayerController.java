@@ -50,6 +50,7 @@ final class LocationLayerController {
   private LocationComponentPositionManager positionManager;
 
   private LocationLayerRenderer locationLayerRenderer;
+  private Float gpsBearing;
 
   LocationLayerController(MapboxMap mapboxMap, Style style,
                           LayerSourceProvider layerSourceProvider,
@@ -110,6 +111,11 @@ final class LocationLayerController {
     if (this.renderMode == renderMode) {
       return;
     }
+
+    if (renderMode == RenderMode.GPS) {
+      locationLayerRenderer.setGpsBearing(gpsBearing);
+    }
+
     this.renderMode = renderMode;
 
     styleBitmaps(options);
@@ -265,7 +271,11 @@ final class LocationLayerController {
     new MapboxAnimator.AnimationsValueChangeListener<Float>() {
       @Override
       public void onNewAnimationValue(Float value) {
-        locationLayerRenderer.setGpsBearing(value);
+        if (renderMode == RenderMode.GPS) {
+          locationLayerRenderer.setGpsBearing(value);
+        } else {
+          gpsBearing = value;
+        }
       }
   };
 
@@ -303,10 +313,9 @@ final class LocationLayerController {
   Set<AnimatorListenerHolder> getAnimationListeners() {
     Set<AnimatorListenerHolder> holders = new HashSet<>();
     holders.add(new AnimatorListenerHolder(MapboxAnimator.ANIMATOR_LAYER_LATLNG, latLngValueListener));
+    holders.add(new AnimatorListenerHolder(MapboxAnimator.ANIMATOR_LAYER_GPS_BEARING, gpsBearingValueListener));
 
-    if (renderMode == RenderMode.GPS) {
-      holders.add(new AnimatorListenerHolder(MapboxAnimator.ANIMATOR_LAYER_GPS_BEARING, gpsBearingValueListener));
-    } else if (renderMode == RenderMode.COMPASS) {
+    if (renderMode == RenderMode.COMPASS) {
       holders.add(
         new AnimatorListenerHolder(MapboxAnimator.ANIMATOR_LAYER_COMPASS_BEARING, compassBearingValueListener));
     }
